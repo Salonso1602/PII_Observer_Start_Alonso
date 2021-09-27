@@ -4,18 +4,24 @@ using System.Collections.Generic;
 
 namespace Observer
 {
-    public class TemperatureSensor
+    public class TemperatureSensor : ISubject
     {
         // An array of sample data to mimic a temperature device.
         public Nullable<Decimal>[] SampleData = { 14.6m, 14.65m, 14.7m, 14.9m, 14.9m, 15.2m, 15.25m, 15.2m, 15.4m, 15.45m };
 
         public const int Delay = 1000;
 
-        private List<TemperatureReporter> observers = new List<TemperatureReporter>();
-
+        private List<IObserver> observers = new List<IObserver>();
+        public List<IObserver> Observers 
+        {
+            get
+            {
+                return this.observers;
+            }
+        }
         public Temperature Current { get; private set; }
 
-        public void Subscribe(TemperatureReporter observer)
+        public void AddObserver(IObserver observer)
         {
             if (! observers.Contains(observer))
             {
@@ -23,7 +29,7 @@ namespace Observer
             }
         }
 
-        public void Unsubscribe(TemperatureReporter observer)
+        public void RemoveObserver(IObserver observer)
         {
             if (observers.Contains(observer))
             {
@@ -45,10 +51,7 @@ namespace Observer
                     if (start || (Math.Abs(temp.Value - previous.Value) >= 0.1m))
                     {
                         this.Current = new Temperature(temp.Value, DateTime.Now);
-                        foreach (var observer in observers)
-                        {
-                            observer.Update(this.Current);
-                        }
+                        ReportToObservers();
                         previous = temp;
                         if (start)
                         {
@@ -57,6 +60,13 @@ namespace Observer
                     }
                 }
             }
+        }
+        public void ReportToObservers()
+        {
+            foreach (IObserver observer in observers)
+                {
+                    observer.CheckSubject(this);
+                }
         }
     }
 }
